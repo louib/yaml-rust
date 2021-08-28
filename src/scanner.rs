@@ -105,6 +105,7 @@ pub enum TokenType {
     FlowMappingEnd,
     BlockEntry,
     FlowEntry,
+    Comment(String),
     Key,
     Value,
     Alias(String),
@@ -421,6 +422,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                 self.mark,
                 &format!("unexpected character: `{}'", c),
             )),
+            '#' => self.fetch_comment(),
             _ => self.fetch_plain_scalar(),
         }
     }
@@ -495,12 +497,6 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                     self.skip_line();
                     if self.flow_level == 0 {
                         self.allow_simple_key();
-                    }
-                }
-                '#' => {
-                    while !is_breakz(self.ch()) {
-                        self.skip();
-                        self.lookahead(1);
                     }
                 }
                 _ => break,
@@ -579,6 +575,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             self.lookahead(1);
         }
 
+        // TODO
         if self.ch() == '#' {
             while !is_breakz(self.ch()) {
                 self.skip();
@@ -1135,6 +1132,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
             self.lookahead(1);
         }
 
+        // TODO
         if self.ch() == '#' {
             while !is_breakz(self.ch()) {
                 self.skip();
@@ -1478,6 +1476,29 @@ impl<T: Iterator<Item = char>> Scanner<T> {
         }
     }
 
+    fn fetch_comment(&mut self) -> ScanResult {
+        let tok = self.scan_comment()?;
+
+        self.tokens.push_back(tok);
+        Ok(())
+    }
+
+    fn scan_comment(&mut self) -> Result<Token, ScanError> {
+        let start_mark = self.mark;
+        let mut comment = String::new();
+
+        while !is_breakz(self.ch()) {
+            comment.push(self.ch());
+            self.skip();
+            self.lookahead(1);
+        }
+
+        Ok(Token(
+            start_mark,
+            TokenType::Comment(comment),
+        ))
+    }
+
     fn fetch_plain_scalar(&mut self) -> ScanResult {
         self.save_simple_key()?;
         self.disallow_simple_key();
@@ -1512,6 +1533,7 @@ impl<T: Iterator<Item = char>> Scanner<T> {
                 break;
             }
 
+            // TODO
             if self.ch() == '#' {
                 break;
             }
@@ -1746,6 +1768,7 @@ mod test {
     macro_rules! next {
         ($p:ident, $tk:pat) => {{
             let tok = $p.next().unwrap();
+            println!("{:?}", tok);
             match tok.1 {
                 $tk => {}
                 _ => panic!("unexpected token: {:?}", tok),
@@ -1857,6 +1880,7 @@ mod test {
         next!(p, Scalar(TScalarStyle::Plain, _));
         next!(p, Value);
         next!(p, Scalar(TScalarStyle::Plain, _));
+        next!(p, Comment(_));
         next!(p, FlowEntry);
         next!(p, Key);
         next_scalar!(p, TScalarStyle::Plain, "a complex key");

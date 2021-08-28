@@ -55,6 +55,12 @@ pub enum Yaml {
 pub type Array = Vec<Yaml>;
 pub type Hash = LinkedHashMap<Yaml, Yaml>;
 
+#[derive(Clone, Debug)]
+pub struct YamlFormatting {
+    pub comment: String,
+    pub line_comment: String,
+}
+
 // parse f64 as Core schema
 // See: https://github.com/chyh1990/yaml-rust/issues/51
 fn parse_f64(v: &str) -> Option<f64> {
