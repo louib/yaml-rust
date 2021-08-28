@@ -1880,8 +1880,8 @@ mod test {
         next!(p, Scalar(TScalarStyle::Plain, _));
         next!(p, Value);
         next!(p, Scalar(TScalarStyle::Plain, _));
-        next!(p, Comment(_));
         next!(p, FlowEntry);
+        next!(p, Comment(_));
         next!(p, Key);
         next_scalar!(p, TScalarStyle::Plain, "a complex key");
         next!(p, Value);
@@ -1954,6 +1954,7 @@ a sequence:
         next!(p, Scalar(_, _));
         next!(p, Value);
         next!(p, Scalar(_, _));
+        next!(p, Comment(_));
         next!(p, Key);
         next!(p, Scalar(_, _));
         next!(p, Value);
